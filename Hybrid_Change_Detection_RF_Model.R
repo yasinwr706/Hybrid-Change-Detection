@@ -121,7 +121,7 @@ aweinsh <- function(k, i, p, q) {
 }
 
 # List of datasets
-datasets <- list(Data1, Data2, Data3, Data4, Data5, Data6, Data7, Data 8)
+datasets <- list(Data1, Data2, Data3, Data4, Data5, Data6, Data7, Data8)
 
 # Function to compute all indices for a dataset
 compute_indices <- function(data) {
@@ -1044,5 +1044,418 @@ for (i in seq_along(data_list)) {
             row.names = FALSE)
 }
 
+
+## Uploading the NetCDF Files and Applying the Models
+
+
+## Load necessary packages
+library(ncdf4)
+library(tidyverse)
+
+set.seed(8576309)
+
+## Uploading bands
+
+band1 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb1.nc")
+band2 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb2.nc")
+band3 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb3.nc")
+band4 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb4.nc")
+band5 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb5.nc")
+band7 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb7.nc")
+
+# Check attributes of the bands
+print(band1)
+print(band2)
+print(band3)
+print(band4)
+print(band5)
+print(band7)
+
+# Extract latitude, longitude, and time
+lat = ncvar_get(band1, "lat")
+lon = ncvar_get(band1, "lon")
+time = ncvar_get(band7, "time")
+
+lat = as.vector(lat)
+lon = as.vector(lon)
+
+# Band1 Data Extraction
+band_array = ncvar_get(band1, "band1")
+bands = list()
+
+# Extract specific bands
+for (i in 1201:1210) {
+  bands[[i-1200]] = band_array[,,i]
+}
+
+# Convert the first band data into a dataframe and combine with lat/lon
+b1 = bands[[1]]
+b1_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b1 = as.vector(b1))
+
+# Repeat for other bands
+b2 = bands[[2]]
+b2_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b2 = as.vector(b2))
+
+b3 = bands[[3]]
+b3_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b3 = as.vector(b3))
+
+b4 = bands[[4]]
+b4_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b4 = as.vector(b4))
+
+b5 = bands[[5]]
+b5_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b5 = as.vector(b5))
+
+b6 = bands[[6]]
+b6_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b6 = as.vector(b6))
+
+b7 = bands[[7]]
+b7_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b7 = as.vector(b7))
+
+b8 = bands[[8]]
+b8_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b8 = as.vector(b8))
+
+b9 = bands[[9]]
+b9_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b9 = as.vector(b9))
+
+b10 = bands[[10]]
+b10_df = data.frame(lat = rep(lat, length(lon)), lon = rep(lon, each = length(lat)), b10 = as.vector(b10))
+
+# Now, you can access the processed band data frames like b1_df, b2_df, etc.
+# Example: View the first few rows of the first band
+head(b1_df)
+
+## Load necessary packages
+library(ncdf4)
+library(tidyverse)
+
+set.seed(8576309)
+
+## Uploading bands
+
+band1 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb1.nc")
+band2 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb2.nc")
+band3 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb3.nc")
+band4 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb4.nc")
+band5 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb5.nc")
+band7 = nc_open("D:/Rabby/NETCDF/BW_netcdf/BWb7.nc")
+
+# Check attributes of the bands
+print(band1)
+print(band2)
+print(band3)
+print(band4)
+print(band5)
+print(band7)
+
+# Extract latitude, longitude, and time
+lat = ncvar_get(band1, "lat")
+lon = ncvar_get(band1, "lon")
+time = ncvar_get(band7, "time")
+
+lat = as.vector(lat)
+lon = as.vector(lon)
+
+# Band Data Extraction
+band_array = ncvar_get(band1, "band1")
+
+# Create a list to hold data frames for each band
+band_dfs = list()
+
+# Loop through bands 1 to 7 and create a data frame for each
+for (i in 1:7) {
+  band_data = band_array[, , 1200 + i]  # Adjust the index to select bands 1-7
+  band_df = data.frame(
+    lat = rep(lat, length(lon)), 
+    lon = rep(lon, each = length(lat)), 
+    band = as.vector(band_data)
+  )
+  
+  # Name each data frame dynamically
+  band_dfs[[paste0("band", i, "_df")]] = band_df
+}
+
+# Now you have a list 'band_dfs' with data frames for each band from 1 to 7.
+# Example: View the first few rows of the first band
+head(band_dfs$band1_df)
+
+
+# Define a function to calculate indices for each dataset
+calculate_indices <- function(data) {
+  data$NDVI <- ndvi(data$NIR, data$Red)
+  data$NDWI <- ndwi(data$NIR, data$SWIR1)
+  data$MNDWI <- ndwi(data$Green, data$SWIR1)
+  data$NPCRI <- npcri(data$Red, data$Blue)
+  data$BSI <- bsi(data$Red, data$SWIR1, data$NIR, data$Blue)
+  data$EVI <- evi(data$NIR, data$Red, data$Blue)
+  data$AEWInsh <- aweinsh(data$Blue, data$Green, data$NIR, data$SWIR2)
+  return(data)
+}
+
+# Apply the function to each dataset
+T1 <- calculate_indices(T1)
+T2 <- calculate_indices(T2)
+T3 <- calculate_indices(T3)
+T4 <- calculate_indices(T4)
+T5 <- calculate_indices(T5)
+T6 <- calculate_indices(T6)
+T7 <- calculate_indices(T7)
+T8 <- calculate_indices(T8)
+T9 <- calculate_indices(T9)
+T10 <- calculate_indices(T10)
+
+
+## Threshold for Sensitivity and Specificity
+
+# Load necessary libraries
+library(caret)
+library(tidyverse)
+library(magrittr)
+
+# Set seed for reproducibility
+set.seed(8576309)
+
+# Read data
+Vegetation <- read.csv("Vegetation.csv")
+
+# Create factors based on percentage thresholds
+thresholds <- seq(50, 80, by = 1)
+for (i in 1:length(thresholds)) {
+  Vegetation[[paste0("P", i)]] <- ifelse(Vegetation$Percentage > thresholds[i], "S", "Un")
+}
+
+# Convert relevant columns to factors
+Vegetation$Condition <- factor(Vegetation$Condition)
+for (i in 1:31) {
+  Vegetation[[paste0("P", i)]] <- factor(Vegetation[[paste0("P", i)]])
+}
+
+# Define expected and predicted values
+expected_value <- Vegetation$Condition
+predicted_values <- Vegetation[, paste0("P", 1:31)]
+
+# Function to calculate confusion matrices for each predicted value
+confusion_matrices <- lapply(predicted_values, function(predicted_value) {
+  confusionMatrix(predicted_value, expected_value)
+})
+
+# Output confusion matrices for each P1 to P31
+names(confusion_matrices) <- paste0("Confusion_Matrix_P", 1:31)
+
+# Print confusion matrices
+confusion_matrices
+
+# Load necessary libraries
+library(caret)
+library(dplyr)
+library(ggplot2)
+
+# Set seed for reproducibility
+set.seed(8576309)
+
+# Read data
+Vegetation <- read.csv("Vegetation.csv")
+
+# Create factors based on percentage thresholds (50 to 80)
+thresholds <- seq(50, 80, by = 1)
+for (i in 1:length(thresholds)) {
+  Vegetation[[paste0("P", i)]] <- ifelse(Vegetation$Percentage > thresholds[i], "S", "Un")
+}
+
+# Convert relevant columns to factors
+Vegetation$Condition <- factor(Vegetation$Condition)
+for (i in 1:31) {
+  Vegetation[[paste0("P", i)]] <- factor(Vegetation[[paste0("P", i)]])
+}
+
+# Define expected and predicted values
+expected_value <- Vegetation$Condition
+predicted_values <- Vegetation[, paste0("P", 1:31)]
+
+# Function to calculate confusion matrix for each predicted value
+get_confusion_matrix <- function(predicted_value, expected_value) {
+  confusionMatrix(predicted_value, expected_value)
+}
+
+# Apply the function to each predicted column
+results <- lapply(predicted_values, get_confusion_matrix, expected_value = expected_value)
+
+# Extract confusion matrix results for "byClass"
+results_byClass <- lapply(results, function(res) res$byClass)
+
+# Convert to a data frame
+XY <- as.data.frame(results_byClass)
+
+# Remove unnecessary rows (rows 3-10)
+XY <- XY %>% slice(-c(3:10))
+
+# Transpose the data frame
+XY_new <- as.data.frame(t(XY))
+# Add threshold values
+XY_new$Threshold <- seq(50, 80, by = 1)
+
+# Calculate Commission and Omission Errors
+XY_new$CE <- 1 - XY_new$Specificity
+XY_new$OE <- 1 - XY_new$Sensitivity
+
+# Plot Commission Error (CE)
+ggplot(XY_new, aes(x = Threshold, y = CE)) +
+  geom_line() +
+  ggtitle("Commission Error (CE)") +
+  xlab("Threshold") + 
+  ylab("CE")
+
+# Plot Omission Error (OE)
+ggplot(XY_new, aes(x = Threshold, y = OE)) +
+  geom_line() +
+  ggtitle("Omission Error (OE)") +
+  xlab("Threshold") + 
+  ylab("OE")
+
+# Combined plot (CE and OE)
+plot(XY_new$Threshold, XY_new$CE, type = "o", col = "blue", pch = "o", ylab = "Error", xlab = "Threshold", lty = 1)
+points(XY_new$Threshold, XY_new$OE, col = "red", pch = "*")
+lines(XY_new$Threshold, XY_new$OE, col = "red", lty = 2)
+
+# Add legend
+legend("topright", legend = c("CE", "OE"), col = c("blue", "red"), pch = c("o", "*"), lty = c(1, 2), ncol = 1)
+
+
+# Loading necessary libraries
+library(caret)      # For confusionMatrix function
+library(tidyverse)  # For data manipulation and plotting
+library(magrittr)   # For piping (%<>%)
+library(NHANES)     # If necessary for other functionalities
+library(dplyr)      # For data manipulation
+
+# Setting a random seed for reproducibility
+set.seed(8576309)
+
+# Reading the Openwater dataset
+Openwater <- read.csv("Openwater.csv")
+
+# Creating binary columns based on percentage thresholds
+thresholds <- seq(50, 80, 1)
+for (i in 1:length(thresholds)) {
+  column_name <- paste0("P", i)
+  Openwater[[column_name]] <- ifelse(Openwater$Percentage > thresholds[i], "S", "Un")
+}
+
+# Converting columns to factors
+factor_columns <- c("Condition", paste0("P", 1:31))
+Openwater[factor_columns] <- lapply(Openwater[factor_columns], factor)
+
+# Assigning expected and predicted values
+expected_value <- Openwater$Condition
+predicted_values <- lapply(1:31, function(i) Openwater[[paste0("P", i)]])
+
+# Calculating confusion matrices for each prediction column
+results <- lapply(predicted_values, function(pred) confusionMatrix(data = pred, reference = expected_value))
+
+# Extracting byClass results from each confusion matrix
+byClass_results <- lapply(results, function(res) res$byClass)
+
+# Combining results into a data frame for easy manipulation
+XY_P <- as.data.frame(byClass_results)
+
+# Removing unnecessary rows from the results
+XY_P <- XY_P %>% slice(-c(3, 4, 5, 6, 7, 8, 9, 10, 11))
+
+# Transposing the results to match the structure needed
+XY_Pnew <- as.data.frame(t(XY_P))
+XY_Pnew$Threshold <- thresholds
+
+# Calculating Commission Error (CE) and Omission Error (OE)
+XY_Pnew$CE <- 1 - XY_Pnew$Specificity
+XY_Pnew$OE <- 1 - XY_Pnew$Sensitivity
+
+# Plotting Commission Error (CE) vs Threshold
+ggplot(XY_Pnew, aes(x = Threshold, y = CE)) +
+  geom_line() +
+  labs(title = "Commission Error vs Threshold", y = "Commission Error (CE)", x = "Threshold") +
+  theme_minimal()
+
+# Plotting Omission Error (OE) vs Threshold
+ggplot(XY_Pnew, aes(x = Threshold, y = OE)) +
+  geom_line() +
+  labs(title = "Omission Error vs Threshold", y = "Omission Error (OE)", x = "Threshold") +
+  theme_minimal()
+
+# Base plot with both CE and OE for comparison
+plot(XY_Pnew$Threshold, XY_Pnew$CE, type = "o", col = "blue", pch = "o", ylab = "Error", lty = 1, 
+     xlab = "Threshold", main = "Commission and Omission Errors")
+points(XY_Pnew$Threshold, XY_Pnew$OE, col = "red", pch = "*")
+lines(XY_Pnew$Threshold, XY_Pnew$OE, col = "red", lty = 2)
+
+# Adding a legend
+legend("topright", legend = c("CE", "OE"), col = c("blue", "red"), pch = c("o", "*"), lty = c(1, 2), ncol = 1)
+
+
+# Load required libraries
+library(caret)
+library(tidyverse)
+library(NHANES)
+library(magrittr)
+
+# Set seed for reproducibility
+set.seed(8576309)
+
+# Read data
+Overall <- read.csv("Overall.csv")
+
+# Define thresholds for binary classification
+thresholds <- 50:80
+
+# Create binary classification columns dynamically
+for (i in 1:length(thresholds)) {
+  threshold <- thresholds[i]
+  Overall[[paste0("P", i)]] <- with(Overall, ifelse(Percentage > threshold, "S", "Un"))
+}
+
+# Convert all columns to factor
+factor_columns <- c("Condition", paste0("P", 1:31))
+Overall[factor_columns] <- lapply(Overall[factor_columns], factor)
+
+# Extract expected and predicted values for each model
+expected_value <- Overall$Condition
+predicted_values <- lapply(1:31, function(i) Overall[[paste0("P", i)]])
+
+# Calculate confusion matrices for each predicted value
+results <- lapply(predicted_values, function(predicted) confusionMatrix(data = predicted, reference = expected_value))
+
+# Extract byClass results
+x_O <- lapply(results, function(res) res$byClass)
+
+# Convert the list into a data frame
+XY_O <- as.data.frame(x_O)
+
+# Remove irrelevant rows
+XY_O <- XY_O %>% slice(-c(3, 4, 5, 6, 7))
+
+# Transpose and prepare the data for plotting
+XY_O_new <- as.data.frame(t(XY_O))
+XY_O_new$Threshold <- thresholds
+
+# Calculate Commission and Omission errors
+XY_O_new$CE <- 1 - XY_O_new$Specificity
+XY_O_new$OE <- 1 - XY_O_new$Sensitivity
+
+# Plot Commission Error (CE)
+ggplot(XY_O_new, aes(x = Threshold, y = CE)) +
+  geom_line() +
+  labs(title = "Commission Error (CE) vs Threshold", x = "Threshold", y = "CE")
+
+# Plot Omission Error (OE)
+ggplot(XY_O_new, aes(x = Threshold, y = OE)) +
+  geom_line() +
+  labs(title = "Omission Error (OE) vs Threshold", x = "Threshold", y = "OE")
+
+# Combined plot for CE and OE
+plot(XY_O_new$Threshold, XY_O_new$CE, type = "o", col = "blue", pch = "o", ylab = "Error", lty = 1,
+     main = "Commission and Omission Errors vs Threshold")
+points(XY_O_new$Threshold, XY_O_new$OE, col = "red", pch = "*")
+lines(XY_O_new$Threshold, XY_O_new$OE, col = "red", lty = 2)
+
+# Add legend
+legend("topright", legend = c("CE", "OE"), col = c("blue", "red"), pch = c("o", "*"), lty = c(1, 2), ncol = 1)
 
 
